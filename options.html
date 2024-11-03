@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オプション</title>
+    <style>
+        body { 
+            background-color: #2a2a3a;
+            color: #aaaaaa;
+            font-family: Arial, sans-serif; 
+            font-size: 16px;
+            padding: 20px; 
+        }
+
+        .option { 
+            margin-bottom: 15px; 
+        }
+
+        label { 
+            font-size: 1rem; 
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        select, input[type="checkbox"] {
+            padding: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>オプション</h1>
+
+    <!-- Option 1: Display Frequency and Volume -->
+    <div class="option">
+        <label>
+            <input type="checkbox" id="displayInfoCheckbox">
+            周波数とボリュームを表示
+        </label>
+    </div>
+
+    <!-- Option 2: Polyphony Count Selection -->
+    <div class="option">
+        <label for="polyphonySelect">ポリフォニー数:</label>
+        <select id="polyphonySelect">
+            <!-- Dropdown with default value of 2 -->
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+        </select>
+    </div>
+
+    <!-- Option 3: Frequency Settings -->
+    <div class="option">
+        <label for="minFrequency">下限周波数:</label>
+        <select id="minFrequency">
+            <option value="27.5">27.5 Hz</option>
+            <option value="55">55 Hz</option>
+            <option value="110">110 Hz</option>
+            <option value="220">220 Hz</option>
+            <option value="440">440 Hz</option>
+            <option value="880">880 Hz</option>
+            <option value="1760">1760 Hz</option>
+            <option value="3520">3520 Hz</option>
+            <option value="7040">7040 Hz</option>
+            <option value="14080">14080 Hz</option>
+        </select>
+    </div>
+
+    <div class="option">
+        <label for="maxFrequency">上限周波数:</label>
+        <select id="maxFrequency">
+            <option value="27.5">27.5 Hz</option>
+            <option value="55">55 Hz</option>
+            <option value="110">110 Hz</option>
+            <option value="220">220 Hz</option>
+            <option value="440">440 Hz</option>
+            <option value="880">880 Hz</option>
+            <option value="1760">1760 Hz</option>
+            <option value="3520">3520 Hz</option>
+            <option value="7040">7040 Hz</option>
+            <option value="14080">14080 Hz</option>
+        </select>
+    </div>
+
+    <button id="saveSettings">保存</button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const displayInfoCheckbox = document.getElementById("displayInfoCheckbox");
+            const polyphonySelect = document.getElementById("polyphonySelect");
+            const minFrequencySelect = document.getElementById("minFrequency");
+            const maxFrequencySelect = document.getElementById("maxFrequency");
+            const saveButton = document.getElementById("saveSettings");
+
+            const frequencyOptions = [27.5, 55, 110, 220, 440, 880, 1760, 3520, 7040, 14080];
+
+            // 初期設定を読み込む
+            function loadSettings() {
+                // Display Info Checkbox
+                const showInfo = localStorage.getItem("showInfo") === "true";
+                displayInfoCheckbox.checked = showInfo;
+
+                // Polyphony Count
+                const polyphony = localStorage.getItem("polyphony") || "2";
+                polyphonySelect.value = polyphony;
+
+                // Min and Max Frequency
+                const savedMin = parseFloat(localStorage.getItem('minFrequency')) || 27.5;
+                const savedMax = parseFloat(localStorage.getItem('maxFrequency')) || 7040;
+
+                minFrequencySelect.value = savedMin;
+                maxFrequencySelect.value = savedMax;
+
+                updateMaxOptions(savedMin);
+                updateMinOptions(savedMax);
+            }
+
+            // 下限選択に基づいて上限の選択肢を更新
+            function updateMaxOptions(selectedMin) {
+                Array.from(maxFrequencySelect.options).forEach(option => {
+                    option.disabled = parseFloat(option.value) <= parseFloat(selectedMin);
+                });
+                // 上限が下限以下の場合、上限を次の有効な値に設定
+                if (parseFloat(maxFrequencySelect.value) <= parseFloat(selectedMin)) {
+                    const newMax = frequencyOptions.find(freq => freq > parseFloat(selectedMin));
+                    if (newMax) {
+                        maxFrequencySelect.value = newMax;
+                    }
+                }
+            }
+
+            // 上限選択に基づいて下限の選択肢を更新
+            function updateMinOptions(selectedMax) {
+                Array.from(minFrequencySelect.options).forEach(option => {
+                    option.disabled = parseFloat(option.value) >= parseFloat(selectedMax);
+                });
+                // 下限が上限以上の場合、下限を次の有効な値に設定
+                if (parseFloat(minFrequencySelect.value) >= parseFloat(selectedMax)) {
+                    const newMin = frequencyOptions.slice().reverse().find(freq => freq < parseFloat(selectedMax));
+                    if (newMin) {
+                        minFrequencySelect.value = newMin;
+                    }
+                }
+            }
+
+            // イベントリスナーの設定
+            minFrequencySelect.addEventListener('change', (e) => {
+                const selectedMin = parseFloat(e.target.value);
+                updateMaxOptions(selectedMin);
+            });
+
+            maxFrequencySelect.addEventListener('change', (e) => {
+                const selectedMax = parseFloat(e.target.value);
+                updateMinOptions(selectedMax);
+            });
+
+            saveButton.addEventListener("click", () => {
+                const showInfo = displayInfoCheckbox.checked;
+                const polyphony = polyphonySelect.value;
+                const selectedMin = parseFloat(minFrequencySelect.value);
+                const selectedMax = parseFloat(maxFrequencySelect.value);
+
+                if (selectedMin >= selectedMax) {
+                    alert('下限周波数は上限周波数より小さくなければなりません。');
+                    return;
+                }
+
+                // 設定をlocalStorageに保存
+                localStorage.setItem("showInfo", showInfo);
+                localStorage.setItem("polyphony", polyphony);
+                localStorage.setItem("minFrequency", selectedMin);
+                localStorage.setItem("maxFrequency", selectedMax);
+
+                alert('設定を保存しました。');
+            });
+
+            // 初期設定のロード
+            loadSettings();
+        });
+    </script>
+</body>
+</html>
